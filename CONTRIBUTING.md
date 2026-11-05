@@ -101,6 +101,40 @@ You can also try a recipe without rebuilding: in the **Discover** tab, press **A
 
 If an engine needs a pip pin to work (for example `pillow<13`), add it to [`constraints.txt`](MLXRunner/Resources/constraints.txt) with a comment that explains why.
 
+## Adding recommended settings for a model
+
+MLXRunner applies each model's recommended settings in Benchmark and Serve. They come from two places:
+
+1. The model's own files: `generation_config.json` (sampling), `config.json` (context length, YaRN, MTP, quantization) and the chat template (thinking support, `reasoning_effort`, `thinking_budget`).
+2. Profiles in [`MLXRunner/Resources/model-profiles.json`](MLXRunner/Resources/model-profiles.json), written from the model cards.
+
+A profile matches a model by `repos` (exact Hugging Face ids), `nameContains` (part of the repo or folder name) or `modelTypes` (`model_type` in `config.json`). Every matching profile applies, from low to high `priority`, so a family profile (priority 10) can be refined by a repository profile (priority 30).
+
+```json
+{
+  "id": "my-family",
+  "name": "My Family",
+  "priority": 10,
+  "modelTypes": ["my_family"],
+  "source": "https://huggingface.co/org/model",
+  "thinking": { "temperature": 0.6, "top_p": 0.95, "top_k": 20, "min_p": 0 },
+  "instruct": { "temperature": 0.7, "top_p": 0.8, "top_k": 20, "min_p": 0 },
+  "maxTokens": 32768,
+  "minMemoryGB": 32,
+  "onlyEngines": ["mlx-serve"],
+  "engines": {
+    "vllm-mlx": { "args": ["--reasoning-parser", "qwen3"], "minVersion": "0.6.0", "note": "Shown in Serve." }
+  },
+  "notes": ["Anything else the model card says matters."]
+}
+```
+
+`thinking` and `instruct` are the sampling settings for thinking and non-thinking mode. Engine `args` are added every time that engine runs the model, so only use flags the engine accepts. Always link the model card in `source`, and only copy settings the card actually states.
+
+To try a profile without rebuilding, put a list of profiles in `~/Library/Application Support/MLXRunner/model-profiles.json` and press **Rescan** in the Models tab.
+
+Engines declare the flags that set their server-side defaults in `engines.json` under `defaults` (keys `temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty`, `repetition_penalty`, `max_tokens`, `template_args`, `thinking_on`, `thinking_off`). Serve uses them to make the recommended settings the server's defaults.
+
 ## Pull requests
 
 - Keep each pull request to one change, and describe what you tested on which Mac.

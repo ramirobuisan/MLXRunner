@@ -115,7 +115,11 @@ final class EngineManager: ObservableObject {
                 let parts = r.output.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: " ")
                 if r.status == 0, parts.count >= 2 { return .installed(version: String(parts.last!)) }
             }
-            _ = exe
+            // Installed some other way (e.g. a release binary): ask the binary itself.
+            let r = await Shell.run(exe, ["--version"])
+            if let range = r.output.range(of: #"\d+\.\d+(\.\d+)?"#, options: .regularExpression) {
+                return .installed(version: String(r.output[range]))
+            }
             return .installed(version: "")
         default:
             return .installed(version: "")

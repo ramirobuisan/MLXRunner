@@ -4,6 +4,8 @@ struct ServeEntry: Identifiable {
     let id: UUID
     let server: LaunchedServer
     var state: String
+    /// Recommended request fields as JSON members (", \"temperature\": 0.7, …") for the example request.
+    var requestExtras = ""
 }
 
 @MainActor
@@ -23,7 +25,7 @@ final class ServeManager: ObservableObject {
     }
 
     func start(spec: EngineSpec, model: LocalModel, host: String, port: Int, extraArgs: String,
-               manager: EngineManager) {
+               defaultArgs: [String] = [], requestExtras: String = "", manager: EngineManager) {
         guard !starting else { return }
         if !SystemInfo.isPortFree(port) {
             lastError = "Port \(port) is already in use. Pick another port."
@@ -35,10 +37,10 @@ final class ServeManager: ObservableObject {
         manager.busy.insert(spec.id)
         Task {
             do {
-                let args = extraArgs.split(separator: " ").map(String.init)
+                let args = defaultArgs + extraArgs.split(separator: " ").map(String.init)
                 let srv = try await EngineLauncher.launch(spec, manager: manager, model: model, host: host, port: port,
                                                           extraArgs: args, onLine: handler())
-                running.append(ServeEntry(id: srv.id, server: srv, state: "Running"))
+                running.append(ServeEntry(id: srv.id, server: srv, state: "Running", requestExtras: requestExtras))
                 append("✓ Ready: \(srv.openAIBase)  (model name: \(srv.requestModel))")
             } catch {
                 lastError = error.localizedDescription

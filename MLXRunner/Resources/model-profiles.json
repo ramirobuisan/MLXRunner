@@ -1,0 +1,223 @@
+[
+  {
+    "id": "qwen3",
+    "name": "Qwen3",
+    "priority": 10,
+    "modelTypes": [
+      "qwen3",
+      "qwen3_moe"
+    ],
+    "source": "https://huggingface.co/Qwen/Qwen3-0.6B",
+    "thinking": {
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0
+    },
+    "instruct": {
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "min_p": 0
+    },
+    "maxTokens": 32768,
+    "engines": {
+      "vllm-mlx": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3"
+        ]
+      },
+      "mlx-openai-server": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3"
+        ]
+      },
+      "rapid-mlx": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3"
+        ]
+      },
+      "mtplx": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3"
+        ]
+      }
+    },
+    "notes": [
+      "Don't use greedy decoding (temperature 0) in thinking mode: Qwen says it lowers quality and causes endless repetition.",
+      "If answers repeat endlessly, set presence_penalty to 1.5.",
+      "Add /think or /no_think to a message to switch thinking on or off for that turn."
+    ]
+  },
+  {
+    "id": "qwen3.5",
+    "name": "Qwen3.5",
+    "priority": 10,
+    "modelTypes": [
+      "qwen3_5",
+      "qwen3_5_moe"
+    ],
+    "source": "https://huggingface.co/Qwen/Qwen3.5-35B-A3B",
+    "thinking": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0,
+      "presence_penalty": 1.5,
+      "repetition_penalty": 1.0
+    },
+    "instruct": {
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "min_p": 0,
+      "presence_penalty": 1.5,
+      "repetition_penalty": 1.0
+    },
+    "maxTokens": 32768,
+    "engines": {
+      "vllm-mlx": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3"
+        ]
+      },
+      "mlx-openai-server": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3_5"
+        ]
+      },
+      "rapid-mlx": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3"
+        ]
+      },
+      "mtplx": {
+        "args": [
+          "--reasoning-parser",
+          "qwen3"
+        ]
+      },
+      "lmstudio": {
+        "note": "In LM Studio, turn off KV cache quantization for this model: MLX vision models of this architecture fail to load with it."
+      }
+    },
+    "notes": [
+      "For precise coding in thinking mode, Qwen suggests temperature 0.6 and presence_penalty 0. For reasoning without thinking: temperature 1.0, top_p 1.0, top_k 40, presence_penalty 2.0.",
+      "presence_penalty between 0 and 2 reduces endless repetition; high values can mix languages.",
+      "Keep at least 128K tokens of context so thinking works well."
+    ]
+  },
+  {
+    "id": "qwen3-vl",
+    "name": "Qwen3-VL",
+    "priority": 10,
+    "modelTypes": [
+      "qwen3_vl",
+      "qwen3_vl_moe"
+    ],
+    "source": "https://huggingface.co/Qwen/Qwen3-VL-30B-A3B-Instruct",
+    "notes": [
+      "Vision model: to send images, use mlx-vlm, mlx-openai-server, vllm-mlx or LM Studio. mlx-lm only reads text."
+    ]
+  },
+  {
+    "id": "qwen3.8",
+    "name": "Qwen3.8",
+    "priority": 20,
+    "nameContains": [
+      "qwen3.8"
+    ],
+    "modelTypes": [
+      "qwen4_exp"
+    ],
+    "source": "https://huggingface.co/Qwen/Qwen3.8-27B",
+    "thinking": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0,
+      "presence_penalty": 0,
+      "repetition_penalty": 1.0
+    },
+    "instruct": {
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "min_p": 0,
+      "presence_penalty": 1.5,
+      "repetition_penalty": 1.0
+    },
+    "maxTokens": 32768,
+    "engines": {
+      "mlx-vlm": {
+        "minVersion": "0.6.13"
+      }
+    },
+    "notes": [
+      "reasoning_effort sets how long it thinks: low, medium or xhigh (the default). Lower effort is faster per answer but can need more retries in agent work.",
+      "preserve_thinking is on by default: earlier turns keep their reasoning, which costs tokens but helps multi-turn accuracy.",
+      "For agent work Qwen suggests long outputs: up to 262,144 tokens of reasoning and 131,072 tokens of answer."
+    ]
+  },
+  {
+    "id": "qwen4_exp",
+    "name": "Qwen3.8-Flash-Next",
+    "priority": 25,
+    "modelTypes": [
+      "qwen4_exp"
+    ],
+    "source": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
+    "onlyEngines": [
+      "mlx-serve"
+    ],
+    "engines": {
+      "mlx-serve": {
+        "minVersion": "26.8.11"
+      }
+    },
+    "notes": [
+      "The qwen4_exp architecture (n-gram embedding, hyper-connections) only runs in mlx-serve 26.8.11 or newer on a Mac."
+    ]
+  },
+  {
+    "id": "arc4num-flash-next-mlx-serve",
+    "name": "Qwen3.8-Flash-Next Uncensored, mlx-serve 4-bit pack",
+    "priority": 30,
+    "repos": [
+      "ARC4NUM/Qwen3.8-Flash-Next-Uncensored-MLX-Serve-4bit"
+    ],
+    "source": "https://huggingface.co/ARC4NUM/Qwen3.8-Flash-Next-Uncensored-MLX-Serve-4bit",
+    "minMemoryGB": 96,
+    "notes": [
+      "Needs at least 96 GB of unified memory (128 GB recommended for long agent contexts); about 68 GB stays resident.",
+      "Keep it on the internal SSD: the 51B-parameter n-gram table (ngram_table.bin) is read from disk while it generates.",
+      "mlx-serve drafts with the model's MTP head for faster generation. For agent work, --reasoning-budget 2048 keeps thinking short."
+    ]
+  },
+  {
+    "id": "orcarouter-qwen3.8-27b",
+    "name": "Qwen3.8-27B Uncensored (orcarouter)",
+    "priority": 30,
+    "repos": [
+      "orcarouter/Qwen3.8-27B-Uncensored-MLX"
+    ],
+    "source": "https://huggingface.co/orcarouter/Qwen3.8-27B-Uncensored-MLX",
+    "engines": {
+      "mlx-vlm": {
+        "minVersion": "0.6.13",
+        "note": "The MTP drafter is in the repo's mtp/ folder. mlx-vlm uses it with --draft-model <mtp folder> --draft-kind mtp --draft-block-size 4."
+      }
+    },
+    "notes": [
+      "Gated on Hugging Face: accept the terms on the model page, then add a read token in MLXRunner Settings to download it.",
+      "The repo root is the 4-bit build. Avoid the 2-bit build: it breaks down into repetition loops and garbled text."
+    ]
+  }
+]

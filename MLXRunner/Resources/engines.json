@@ -21,7 +21,15 @@
       "--port",
       "{port}"
     ],
-    "requestModel": "{model}"
+    "requestModel": "{model}",
+    "defaults": {
+      "temperature": "--temp",
+      "top_p": "--top-p",
+      "top_k": "--top-k",
+      "min_p": "--min-p",
+      "max_tokens": "--max-tokens",
+      "template_args": "--chat-template-args"
+    }
   },
   {
     "id": "mlx-vlm",
@@ -48,7 +56,11 @@
       "{port}"
     ],
     "requestModel": "{model}",
-    "visionOnly": true
+    "visionOnly": true,
+    "defaults": {
+      "max_tokens": "--max-tokens",
+      "thinking_on": "--enable-thinking"
+    }
   },
   {
     "id": "vllm-mlx",
@@ -72,7 +84,17 @@
       "--port",
       "{port}"
     ],
-    "requestModel": "{model}"
+    "requestModel": "{model}",
+    "defaults": {
+      "temperature": "--default-temperature",
+      "top_p": "--default-top-p",
+      "top_k": "--default-top-k",
+      "min_p": "--default-min-p",
+      "presence_penalty": "--default-presence-penalty",
+      "repetition_penalty": "--default-repetition-penalty",
+      "max_tokens": "--max-tokens",
+      "template_args": "--default-chat-template-kwargs"
+    }
   },
   {
     "id": "mlx-omni-server",
@@ -122,7 +144,16 @@
       "--port",
       "{port}"
     ],
-    "requestModel": "{model}"
+    "requestModel": "{model}",
+    "defaults": {
+      "temperature": "--temperature",
+      "top_p": "--top-p",
+      "top_k": "--top-k",
+      "min_p": "--min-p",
+      "presence_penalty": "--presence-penalty",
+      "repetition_penalty": "--repetition-penalty",
+      "max_tokens": "--max-tokens"
+    }
   },
   {
     "id": "rapid-mlx",
@@ -151,6 +182,16 @@
     "env": {
       "RAPID_MLX_TELEMETRY": "0",
       "DO_NOT_TRACK": "1"
+    },
+    "defaults": {
+      "temperature": "--default-temperature",
+      "top_p": "--default-top-p",
+      "top_k": "--default-top-k",
+      "min_p": "--default-min-p",
+      "presence_penalty": "--default-presence-penalty",
+      "repetition_penalty": "--default-repetition-penalty",
+      "max_tokens": "--max-tokens",
+      "thinking_off": "--no-thinking"
     }
   },
   {
@@ -202,7 +243,15 @@
       "{port}",
       "{mtpFlag}"
     ],
-    "requestModel": "{model}"
+    "requestModel": "{model}",
+    "defaults": {
+      "temperature": "--default-temperature",
+      "top_p": "--default-top-p",
+      "top_k": "--default-top-k",
+      "presence_penalty": "--default-presence-penalty",
+      "max_tokens": "--max-tokens",
+      "thinking_off": "--reasoning off"
+    }
   },
   {
     "id": "mlx-serve",
@@ -229,7 +278,13 @@
       "--port",
       "{port}"
     ],
-    "requestModel": "{modelName}"
+    "requestModel": "{modelName}",
+    "defaults": {
+      "temperature": "--temp",
+      "top_p": "--top-p",
+      "top_k": "--top-k",
+      "max_tokens": "--max-tokens"
+    }
   },
   {
     "id": "lmstudio",
