@@ -1,0 +1,253 @@
+[
+  {
+    "id": "mlx-lm",
+    "name": "mlx-lm",
+    "repo": "ml-explore/mlx-lm",
+    "summary": "Apple's reference MLX text engine. The baseline every other engine is compared against.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "mlx-lm"
+      ]
+    },
+    "versionPackage": "mlx-lm",
+    "command": [
+      "{bin}/mlx_lm.server",
+      "--model",
+      "{model}",
+      "--host",
+      "{host}",
+      "--port",
+      "{port}"
+    ],
+    "requestModel": "{model}"
+  },
+  {
+    "id": "mlx-vlm",
+    "name": "mlx-vlm",
+    "repo": "Blaizzy/mlx-vlm",
+    "summary": "Vision-language models (Qwen-VL, Gemma vision, Pixtral...). Only used for models that have a vision encoder.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "mlx-vlm",
+        "torch",
+        "torchvision"
+      ]
+    },
+    "versionPackage": "mlx-vlm",
+    "command": [
+      "{bin}/mlx_vlm.server",
+      "--model",
+      "{model}",
+      "--host",
+      "{host}",
+      "--port",
+      "{port}"
+    ],
+    "requestModel": "{model}",
+    "visionOnly": true
+  },
+  {
+    "id": "vllm-mlx",
+    "name": "vllm-mlx",
+    "repo": "waybarrios/vllm-mlx",
+    "summary": "vLLM-style server for MLX with continuous batching, prefix cache and multimodal support.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "vllm-mlx"
+      ]
+    },
+    "versionPackage": "vllm-mlx",
+    "command": [
+      "{bin}/vllm-mlx",
+      "serve",
+      "{model}",
+      "--host",
+      "{host}",
+      "--port",
+      "{port}"
+    ],
+    "requestModel": "{model}"
+  },
+  {
+    "id": "mlx-omni-server",
+    "name": "MLX Omni Server",
+    "repo": "madroidmaq/mlx-omni-server",
+    "summary": "OpenAI and Anthropic compatible server. Loads the model named in each request.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "mlx-omni-server"
+      ]
+    },
+    "versionPackage": "mlx-omni-server",
+    "command": [
+      "{bin}/mlx-omni-server",
+      "--host",
+      "{host}",
+      "--port",
+      "{port}"
+    ],
+    "requestModel": "{model}",
+    "experimental": true
+  },
+  {
+    "id": "mlx-openai-server",
+    "name": "mlx-openai-server",
+    "repo": "cubist38/mlx-openai-server",
+    "summary": "FastAPI OpenAI-compatible server for MLX text and vision models.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "mlx-openai-server"
+      ]
+    },
+    "versionPackage": "mlx-openai-server",
+    "command": [
+      "{bin}/mlx-openai-server",
+      "launch",
+      "--model-type",
+      "{modelType}",
+      "--model-path",
+      "{model}",
+      "--host",
+      "{host}",
+      "--port",
+      "{port}"
+    ],
+    "requestModel": "{model}"
+  },
+  {
+    "id": "rapid-mlx",
+    "name": "Rapid-MLX",
+    "repo": "raullenchai/Rapid-MLX",
+    "summary": "Fast local engine with prompt caching and tool calling.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "rapid-mlx"
+      ]
+    },
+    "versionPackage": "rapid-mlx",
+    "command": [
+      "{bin}/rapid-mlx",
+      "serve",
+      "{model}",
+      "--host",
+      "{host}",
+      "--port",
+      "{port}"
+    ],
+    "requestModel": "{model}",
+    "experimental": true,
+    "env": {
+      "RAPID_MLX_TELEMETRY": "0",
+      "DO_NOT_TRACK": "1"
+    }
+  },
+  {
+    "id": "omlx",
+    "name": "oMLX",
+    "repo": "jundot/omlx",
+    "summary": "Continuous batching and SSD KV cache server (also a menu bar app). Serves every model in a folder.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "git+https://github.com/jundot/omlx"
+      ]
+    },
+    "versionPackage": "omlx",
+    "command": [
+      "{bin}/omlx",
+      "serve",
+      "--model-dir",
+      "{modelParent}",
+      "--headless"
+    ],
+    "env": {
+      "OMLX_PORT": "{port}",
+      "OMLX_HOST": "{host}"
+    },
+    "requestModel": "{modelName}",
+    "experimental": true
+  },
+  {
+    "id": "mtplx",
+    "name": "MTPLX",
+    "repo": "youssofal/MTPLX",
+    "summary": "Multi-token prediction decoding. Big speedups on models that ship MTP heads (Qwen 3.5+); runs others without MTP.",
+    "install": {
+      "kind": "uv",
+      "python": "3.12",
+      "packages": [
+        "mtplx"
+      ]
+    },
+    "versionPackage": "mtplx",
+    "command": [
+      "{bin}/mtplx",
+      "serve",
+      "--model",
+      "{model}",
+      "--port",
+      "{port}",
+      "{mtpFlag}"
+    ],
+    "requestModel": "{model}"
+  },
+  {
+    "id": "mlx-serve",
+    "name": "mlx-serve",
+    "repo": "ddalcu/mlx-serve",
+    "summary": "Native (no Python) MLX server with MTP, prompt lookup decoding and an optional Mac app.",
+    "install": {
+      "kind": "brew",
+      "tap": "ddalcu/mlx-serve",
+      "tapURL": "https://github.com/ddalcu/mlx-serve",
+      "formula": "mlx-serve",
+      "binaries": [
+        "~/.local/bin/mlx-serve",
+        "/opt/homebrew/bin/mlx-serve",
+        "/Applications/MLX-Serve.app/Contents/MacOS/mlx-serve"
+      ]
+    },
+    "command": [
+      "{exe}",
+      "--model",
+      "{model}",
+      "--host",
+      "{host}",
+      "--port",
+      "{port}"
+    ],
+    "requestModel": "{modelName}"
+  },
+  {
+    "id": "lmstudio",
+    "name": "LM Studio (mlx-engine)",
+    "repo": "lmstudio-ai/mlx-engine",
+    "summary": "LM Studio's MLX runtime, driven through the `lms` command. Only models inside LM Studio's models folder.",
+    "install": {
+      "kind": "external",
+      "binaries": [
+        "~/.lmstudio/bin/lms"
+      ],
+      "url": "https://lmstudio.ai/download",
+      "note": "Install the LM Studio app, open it once, then click Refresh."
+    },
+    "command": [
+      "{exe}"
+    ],
+    "requestModel": "{lmsIdentifier}",
+    "lifecycle": "lmstudio"
+  }
+]

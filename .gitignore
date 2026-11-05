@@ -1,0 +1,6 @@
+build/
+DerivedData/
+*.xcodeproj/
+MLXRunner/Info.plist
+.DS_Store
+xcuserdata/
