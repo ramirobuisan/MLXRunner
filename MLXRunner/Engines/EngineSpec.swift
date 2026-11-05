@@ -29,6 +29,9 @@ struct EngineSpec: Codable, Identifiable, Hashable {
     var experimental: Bool?
     /// "process" (default) or "lmstudio".
     var lifecycle: String?
+    /// Flags that set server-side defaults, keyed by API name: temperature, top_p, top_k, min_p,
+    /// presence_penalty, repetition_penalty, max_tokens, template_args (JSON), thinking_on, thinking_off.
+    var defaults: [String: String]?
     var custom: Bool?
 
     var repoURL: URL? { URL(string: "https://github.com/\(repo)") }

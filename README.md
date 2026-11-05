@@ -18,10 +18,11 @@ There are now about a dozen MLX engines (mlx-lm, vllm-mlx, oMLX, mlx-serve, MTPL
 ## Features
 
 - **Engines**: one-click install of every engine into its own isolated Python environment (managed with [uv](https://docs.astral.sh/uv/)), or through Homebrew or an app you already have. Engines update automatically once a day. A new version installs next to the old one, and the old one is deleted only after the new one works.
+- **Recommended settings per model**: reads each model's card and files (sampling, thinking mode, output length, context, the engines and versions it needs) and applies them in Benchmark and Serve. See [`model-profiles.json`](MLXRunner/Resources/model-profiles.json).
 - **Models**: finds the MLX models already on your Mac (MLXRunner folder, Hugging Face cache, LM Studio, mlx-serve) and downloads new ones from Hugging Face, with the size in GB and a "fits in memory" hint.
 - **Benchmark**: launches each engine as a server, sends identical streamed requests and measures time to first token, prompt speed, generation speed, peak memory and load time.
 - **Results**: a ranking per model with a weighted score (you choose the weights), charts and CSV export.
-- **Serve**: run any model with any engine on the port you choose, on this Mac or on your local network. The benchmark winner is preselected.
+- **Serve**: run any model with any engine on the port you choose, on this Mac or on your local network. The benchmark winner is preselected. With mlx-serve, a model runs exactly as in the MLX-Serve app, with the settings you saved there.
 - **Discover**: searches GitHub for new MLX engines and lets you add one as a custom engine.
 
 | Engines | Serve |
@@ -89,7 +90,7 @@ Every engine is started as an OpenAI-compatible server, one at a time, with a co
 
 - **Prompt lengths**: 512, 2,048 and 8,192 tokens by default, each followed by 256 generated tokens.
 - **Fair prompts**: every prompt starts with a random nonce, so no engine can answer from a prompt cache. A 1,024-token warm-up request also calibrates the prompt length to each model's tokenizer.
-- **Same settings everywhere**: temperature 0, thinking turned off where the model supports it, and end-of-sequence ignored where the engine allows it, so every engine generates the same number of tokens.
+- **Same settings everywhere**: each model's recommended sampling (or greedy decoding, if you prefer), thinking turned off where the model supports it, and end-of-sequence ignored where the engine allows it, so every engine generates the same number of tokens.
 - **Repeats**: 3 measured runs per prompt length; the median is kept.
 
 | Metric | How it is measured |

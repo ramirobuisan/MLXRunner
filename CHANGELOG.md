@@ -4,6 +4,16 @@ All notable changes to MLXRunner are listed here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+
+- Recommended settings per model, from the model cards and the model's own files: sampling for thinking and non-thinking mode, output length, context, memory, the engines and minimum engine versions it needs, and notes. Bundled for Qwen3, Qwen3.5, Qwen3.8, Qwen3.8-Flash-Next and Qwen3-VL, and extensible with `model-profiles.json`.
+- Models tab: a "Recommended settings" column with the details for each model.
+- Benchmark: uses each model's recommended sampling by default (switch back to greedy decoding in the settings), skips engines a model can't run, and records the sampling in results and CSV.
+- Serve: thinking or no-thinking mode, and the recommended sampling and output length set as the server's defaults on engines that support it.
+- Serve with mlx-serve: "Run it like the MLX-Serve app" (on by default) keeps the context, MTP, drafter, KV cache and request defaults you saved in the MLX-Serve app, and shows them. The Models tab and benchmark log show them too.
+- Serve preselects the model and engine you started last time.
+- mlx-serve's version is detected when it was installed without Homebrew.
+
 ## [0.1.0] - 2026-11-05
 
 First public version.

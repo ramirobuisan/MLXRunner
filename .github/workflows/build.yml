@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Check engines.json
+      - name: Check engines.json and model-profiles.json
         run: |
           python3 - <<'PY'
           import json
@@ -32,6 +32,17 @@ jobs:
                   assert key in s, f"{s.get('id', '?')}: missing {key}"
               assert s["install"]["kind"] in ("uv", "brew", "external"), f"{s['id']}: unknown install kind"
           print(f"{len(ids)} engines OK")
+
+          profiles = json.load(open("MLXRunner/Resources/model-profiles.json"))
+          pids = [p["id"] for p in profiles]
+          assert len(pids) == len(set(pids)), "duplicate profile ids"
+          engine_ids = set(ids)
+          for p in profiles:
+              assert p.get("repos") or p.get("nameContains") or p.get("modelTypes"), f"{p['id']}: matches nothing"
+              assert p.get("source", "").startswith("https://"), f"{p['id']}: needs a source link"
+              for e in list(p.get("engines", {})) + p.get("onlyEngines", []):
+                  assert e in engine_ids, f"{p['id']}: unknown engine {e}"
+          print(f"{len(pids)} model profiles OK")
           PY
 
       - name: Install XcodeGen

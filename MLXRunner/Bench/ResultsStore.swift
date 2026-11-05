@@ -136,14 +136,14 @@ final class ResultsStore: ObservableObject {
     }
 
     func csv() -> String {
-        var lines = ["date,chip,ram_gb,engine,engine_version,model,model_size_gb,prompt_target,prompt_tokens,gen_tokens,ttft_ms,prompt_tps,gen_tps,load_s,mem_peak_gb,process_mem_gb,runs,error"]
+        var lines = ["date,chip,ram_gb,engine,engine_version,model,model_size_gb,prompt_target,prompt_tokens,gen_tokens,ttft_ms,prompt_tps,gen_tps,load_s,mem_peak_gb,process_mem_gb,runs,sampling,error"]
         let f = ISO8601DateFormatter()
         for r in results.sorted(by: { $0.date < $1.date }) {
             let fields: [String] = [
                 f.string(from: r.date), r.machine.chip, r.machine.ramGB.fmt(0), r.engineName, r.engineVersion,
                 r.modelName, r.modelSizeGB.fmt(2), String(r.promptTokensTarget), String(r.promptTokens),
                 String(r.genTokens), r.ttftMs.fmt(1), r.promptTps.fmt(1), r.genTps.fmt(2), r.loadSec.fmt(1),
-                r.memPeakGB.fmt(2), r.procMemGB.fmt(2), String(r.runs), r.error ?? "",
+                r.memPeakGB.fmt(2), r.procMemGB.fmt(2), String(r.runs), r.sampling ?? "", r.error ?? "",
             ]
             lines.append(fields.map { "\"\($0.replacingOccurrences(of: "\"", with: "\"\""))\"" }.joined(separator: ","))
         }

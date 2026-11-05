@@ -170,6 +170,7 @@ final class ModelStore: ObservableObject {
 
     func scan() {
         isScanning = true
+        ModelProfiles.shared.reload()   // model files may have changed
         Task.detached(priority: .userInitiated) {
             let found = ModelScanner.scanAll()
             await MainActor.run {

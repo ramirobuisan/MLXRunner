@@ -100,6 +100,8 @@ struct BenchmarkView: View {
                 Stepper("Cool-down between engines: \(Int(runner.settings.cooldownSeconds)) s",
                         value: $runner.settings.cooldownSeconds, in: 0...120, step: 5)
                 Toggle("Disable thinking (reasoning models)", isOn: $runner.settings.disableThinking)
+                Toggle("Use each model's recommended sampling", isOn: $runner.settings.recommendedSampling)
+                    .help("Sampling from the model card or generation_config.json, as in real use. Off: greedy decoding (temperature 0).")
             }
             Section {
                 Text("Close other heavy apps and keep the Mac on power for stable numbers. Only one engine runs at a time; each gets one warm-up request before measuring.")

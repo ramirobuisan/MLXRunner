@@ -6,7 +6,16 @@ struct BenchSettings: Codable, Equatable {
     var runs = 3
     var cooldownSeconds = 5.0
     var disableThinking = true
+    /// Use each model's recommended sampling (from its model card or generation_config.json) instead of greedy decoding.
+    var recommendedSampling = true
     var readyTimeout = 900.0
+}
+
+/// How each benchmark request is sent.
+struct RequestOptions {
+    var disableThinking: Bool
+    /// nil = greedy decoding (temperature 0).
+    var sampling: Sampling?
 }
 
 struct BenchResult: Codable, Identifiable, Hashable {
@@ -29,6 +38,8 @@ struct BenchResult: Codable, Identifiable, Hashable {
     var procMemGB: Double = 0
     var runs: Int = 0
     var machine: MachineInfo = SystemInfo.machine
+    /// Sampling used, e.g. "temperature 0.7 · top_p 0.8"; nil for greedy runs made before this was recorded.
+    var sampling: String?
     var error: String?
 
     var ok: Bool { error == nil }
@@ -73,13 +84,13 @@ enum BenchClient {
     }
 
     static func measure(base: URL, model: String, prompt: String, maxTokens: Int,
-                        disableThinking: Bool, extras: inout Bool, loadingTimeout: TimeInterval = 900) async throws -> Sample {
+                        options: RequestOptions, extras: inout Bool, loadingTimeout: TimeInterval = 900) async throws -> Sample {
         // Servers that load the model in the background answer 503 until it is ready: wait and retry.
         let deadline = Date().addingTimeInterval(loadingTimeout)
         while true {
             do {
                 return try await measureOnce(base: base, model: model, prompt: prompt, maxTokens: maxTokens,
-                                             disableThinking: disableThinking, extras: &extras)
+                                             options: options, extras: &extras)
             } catch let e as NSError where e.domain == "HTTP" && e.code == 503 && Date() < deadline {
                 try await Task.sleep(nanoseconds: 1_000_000_000)
             }
@@ -87,20 +98,20 @@ enum BenchClient {
     }
 
     private static func measureOnce(base: URL, model: String, prompt: String, maxTokens: Int,
-                                    disableThinking: Bool, extras: inout Bool) async throws -> Sample {
+                                    options: RequestOptions, extras: inout Bool) async throws -> Sample {
         do {
             return try await request(base: base, model: model, prompt: prompt, maxTokens: maxTokens,
-                                     disableThinking: disableThinking, extras: extras)
+                                     options: options, extras: extras)
         } catch let e as NSError where extras && e.domain == "HTTP" && (400..<500).contains(e.code) {
             // Some servers reject unknown fields; retry once with a plain OpenAI request.
             extras = false
             return try await request(base: base, model: model, prompt: prompt, maxTokens: maxTokens,
-                                     disableThinking: false, extras: false)
+                                     options: options, extras: false)
         }
     }
 
     private static func request(base: URL, model: String, prompt: String, maxTokens: Int,
-                                disableThinking: Bool, extras: Bool) async throws -> Sample {
+                                options: RequestOptions, extras: Bool) async throws -> Sample {
         var req = URLRequest(url: base.appendingPathComponent("v1/chat/completions"), timeoutInterval: 900)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -113,10 +124,14 @@ enum BenchClient {
             "stream": true,
             "stream_options": ["include_usage": true],
         ]
+        // Recommended sampling: standard OpenAI fields always, extensions (top_k, min_p, …) only while accepted.
+        for (k, v) in options.sampling?.fields ?? [] where extras || Sampling.standardFields.contains(k) {
+            body[k] = v
+        }
         if extras {
             body["ignore_eos"] = true
             body["min_tokens"] = maxTokens
-            if disableThinking { body["chat_template_kwargs"] = ["enable_thinking": false] }
+            if options.disableThinking { body["chat_template_kwargs"] = ["enable_thinking": false] }
         }
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -229,7 +244,7 @@ final class BenchmarkRunner: ObservableObject {
             step = "\(spec.name) · \(model.displayName)"
             append("")
             append("▶ \(spec.name) on \(model.displayName) (\(model.sizeGB.fmt(1)) GB)")
-            if let why = EngineLauncher.incompatibility(spec, model) {
+            if let why = EngineLauncher.incompatibility(spec, model, manager: manager) {
                 append("  skipped: \(why)")
                 continue
             }
@@ -246,9 +261,15 @@ final class BenchmarkRunner: ObservableObject {
                           manager: EngineManager, store: ResultsStore) async {
         var version = ""
         if case .installed(let v) = manager.status[spec.id] { version = v }
+        let recipe = ModelProfiles.shared.recipe(for: model)
+        let sampling = settings.recommendedSampling ? recipe.sampling(thinking: !settings.disableThinking) : nil
+        let options = RequestOptions(disableThinking: settings.disableThinking, sampling: sampling)
+        let samplingText = sampling.map { $0.summary } ?? "greedy (temperature 0)"
         func base(_ target: Int) -> BenchResult {
-            BenchResult(engineId: spec.id, engineName: spec.name, engineVersion: version, modelPath: model.path,
-                        modelName: model.displayName, modelSizeGB: model.sizeGB, promptTokensTarget: target)
+            var r = BenchResult(engineId: spec.id, engineName: spec.name, engineVersion: version, modelPath: model.path,
+                                modelName: model.displayName, modelSizeGB: model.sizeGB, promptTokensTarget: target)
+            r.sampling = samplingText
+            return r
         }
         guard manager.isInstalled(spec.id) else {
             append("  skipped: not installed")
@@ -266,12 +287,15 @@ final class BenchmarkRunner: ObservableObject {
             server = srv
             monitor.start(pid: srv.pid)
             append("  server up on :\(srv.port) after \(Date().timeIntervalSince(t0).fmt(1)) s, warming up…")
+            append("  sampling: \(samplingText)\(sampling != nil && !recipe.samplingSource.isEmpty ? " (\(recipe.samplingSource))" : "")")
+            if spec.id == "mlx-serve", let app = MLXServeAppSettings.load(modelPath: model.path), app.perModel {
+                append("  mlx-serve also uses your MLX-Serve app settings for this model: \(app.summary)")
+            }
             var extras = true
             // Warm-up with a ~1k token prompt; also calibrates characters per token for this tokenizer.
             let warmPrompt = BenchClient.prompt(tokens: 1024, nonce: UUID().uuidString)
             let warm = try await BenchClient.measure(base: srv.baseURL, model: srv.requestModel, prompt: warmPrompt,
-                                                     maxTokens: 16, disableThinking: settings.disableThinking,
-                                                     extras: &extras)
+                                                     maxTokens: 16, options: options, extras: &extras)
             var cpt = 4.6
             if warm.promptTokens > 100 {
                 cpt = min(6, max(2.5, Double(warmPrompt.count) / Double(warm.promptTokens - 20)))
@@ -289,7 +313,7 @@ final class BenchmarkRunner: ObservableObject {
                         let s = try await BenchClient.measure(
                             base: srv.baseURL, model: srv.requestModel,
                             prompt: BenchClient.prompt(tokens: target, nonce: UUID().uuidString, charsPerToken: cpt),
-                            maxTokens: settings.genTokens, disableThinking: settings.disableThinking, extras: &extras)
+                            maxTokens: settings.genTokens, options: options, extras: &extras)
                         samples.append(s)
                         append("  \(target) tok · run \(r + 1): TTFT \((s.ttft * 1000).fmt(0)) ms · prompt \(s.promptTps.fmt(0)) tok/s · gen \(s.genTps.fmt(1)) tok/s (\(s.completionTokens) tok)")
                     } catch {

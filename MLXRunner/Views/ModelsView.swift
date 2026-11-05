@@ -45,6 +45,8 @@ struct LocalModelsView: View {
                     }
                 }
                 .width(min: 90, ideal: 110)
+                TableColumn("Recommended settings") { m in RecipeButton(model: m) }
+                    .width(min: 120, ideal: 170)
             }
             .contextMenu(forSelectionType: LocalModel.ID.self) { ids in
                 if let id = ids.first, let m = models.local.first(where: { $0.id == id }) {
@@ -209,6 +211,27 @@ struct DownloadsList: View {
                     }
                 }
             }
+        }
+    }
+}
+
+/// Opens a model's recommended settings in a popover.
+struct RecipeButton: View {
+    let model: LocalModel
+    @State private var shown = false
+
+    var body: some View {
+        let recipe = ModelProfiles.shared.recipe(for: model)
+        if recipe.hasAdvice {
+            Button { shown.toggle() } label: {
+                Label(recipe.title ?? "From model files", systemImage: recipe.onlyEngines != nil ? "exclamationmark.triangle" : "slider.horizontal.3")
+                    .lineLimit(1)
+            }
+            .buttonStyle(.borderless)
+            .help("Recommended settings for this model")
+            .popover(isPresented: $shown, arrowEdge: .trailing) { ModelRecipeView(model: model, recipe: recipe) }
+        } else {
+            Text("–").foregroundStyle(.secondary)
         }
     }
 }

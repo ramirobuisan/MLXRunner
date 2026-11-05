@@ -46,13 +46,17 @@ enum LaunchError: LocalizedError {
 
 @MainActor
 enum EngineLauncher {
-    /// Why an engine can't run a model, or nil when it can.
-    static func incompatibility(_ spec: EngineSpec, _ model: LocalModel) -> String? {
+    /// Why an engine can't run a model, or nil when it can. Pass the manager to also check the
+    /// model's requirements (engines it needs, minimum engine versions).
+    static func incompatibility(_ spec: EngineSpec, _ model: LocalModel, manager: EngineManager? = nil) -> String? {
         if spec.visionOnly == true && !model.vision { return "\(spec.name) only runs vision models" }
         if spec.isLMStudio && model.lmstudioRelPath == nil {
             return "LM Studio can only run models inside ~/.lmstudio/models"
         }
-        return nil
+        var version: String?
+        if let m = manager, case .installed(let v) = m.status[spec.id] { version = v }
+        return ModelProfiles.shared.recipe(for: model)
+            .incompatibility(engineId: spec.id, engineName: spec.name, version: version)
     }
 
     static func variables(_ spec: EngineSpec, exe: String, bin: String, model: LocalModel,
@@ -76,7 +80,7 @@ enum EngineLauncher {
     static func launch(_ spec: EngineSpec, manager: EngineManager, model: LocalModel, host: String = "127.0.0.1",
                        port: Int, extraArgs: [String] = [], readyTimeout: TimeInterval = 900,
                        onLine: @escaping (String) -> Void) async throws -> LaunchedServer {
-        if let why = incompatibility(spec, model) { throw LaunchError.unsupported(why) }
+        if let why = incompatibility(spec, model, manager: manager) { throw LaunchError.unsupported(why) }
         guard let exe = manager.executable(spec) else { throw LaunchError.notInstalled(spec.name) }
         let vars = variables(spec, exe: exe, bin: manager.binDir(spec) ?? "", model: model, host: host, port: port)
 
@@ -85,6 +89,8 @@ enum EngineLauncher {
         }
 
         var parts = spec.command.map { substitute($0, vars) }.filter { !$0.isEmpty }
+        // Flags the model needs on this engine (from its model card), then the caller's.
+        parts += ModelProfiles.shared.recipe(for: model).engineArgs(spec.id)
         parts += extraArgs
         let program = parts.removeFirst()
         var env: [String: String] = [:]
