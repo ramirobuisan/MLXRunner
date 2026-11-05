@@ -4,7 +4,7 @@
 
 Please do not open a public issue for security problems. Report them privately through GitHub instead:
 
-1. Go to the [Security tab](https://github.com/ramirobuisan/mlxrunner/security) of this repository.
+1. Go to the [Security tab](https://github.com/ramirobuisan/MLXRunner/security) of this repository.
 2. Press **Report a vulnerability** and describe the problem and how to reproduce it.
 
 You should get an answer within 7 days. Fixes are released as soon as possible, and you will be credited unless you prefer not to be.

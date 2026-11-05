@@ -25,5 +25,5 @@ First public version.
 - Cancelled benchmark runs are no longer saved as results, and failures fixed by a later run are hidden.
 - Installed engines are preselected in the Benchmark tab once their status has loaded.
 
-[Unreleased]: https://github.com/ramirobuisan/mlxrunner/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/ramirobuisan/mlxrunner/releases/tag/v0.1.0
+[Unreleased]: https://github.com/ramirobuisan/MLXRunner/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/ramirobuisan/MLXRunner/releases/tag/v0.1.0

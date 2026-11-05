@@ -4,8 +4,8 @@ Thanks for helping. Bug reports, new engines, benchmark results from other Macs 
 
 ## Ways to help
 
-- **Report a bug**: open an issue with the [bug report form](https://github.com/ramirobuisan/mlxrunner/issues/new?template=bug_report.yml). Include your Mac, macOS version and the engine log (Engines tab, select the engine, copy the log).
-- **Ask for an engine**: use the [engine request form](https://github.com/ramirobuisan/mlxrunner/issues/new?template=engine_request.yml).
+- **Report a bug**: open an issue with the [bug report form](https://github.com/ramirobuisan/MLXRunner/issues/new?template=bug_report.yml). Include your Mac, macOS version and the engine log (Engines tab, select the engine, copy the log).
+- **Ask for an engine**: use the [engine request form](https://github.com/ramirobuisan/MLXRunner/issues/new?template=engine_request.yml).
 - **Share results**: in Results, press **Export CSV** and attach the file to an issue. Numbers from M1 to M4 Macs are especially useful.
 - **Send a pull request**: see below.
 
@@ -14,8 +14,8 @@ Thanks for helping. Bug reports, new engines, benchmark results from other Macs 
 You need an Apple Silicon Mac with macOS 15 or newer, Xcode 16 or newer and Homebrew.
 
 ```sh
-git clone https://github.com/ramirobuisan/mlxrunner.git
-cd mlxrunner
+git clone https://github.com/ramirobuisan/MLXRunner.git
+cd MLXRunner
 brew install xcodegen
 xcodegen generate
 open MLXRunner.xcodeproj

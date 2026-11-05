@@ -4,7 +4,7 @@
 
 MLXRunner is a native macOS app for Apple Silicon. It installs the open-source MLX inference engines with one click, benchmarks them against each other on your own models, tells you which engine is fastest for each model, and serves any model as an OpenAI-compatible API.
 
-[![Build](https://github.com/ramirobuisan/mlxrunner/actions/workflows/build.yml/badge.svg)](https://github.com/ramirobuisan/mlxrunner/actions/workflows/build.yml)
+[![Build](https://github.com/ramirobuisan/MLXRunner/actions/workflows/build.yml/badge.svg)](https://github.com/ramirobuisan/MLXRunner/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![macOS 15+](https://img.shields.io/badge/macOS-15%2B-black?logo=apple)
 ![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-M1%E2%80%93M5-orange)
@@ -34,7 +34,7 @@ You need an Apple Silicon Mac (M1 or newer) with macOS 15 or newer.
 
 ### Option 1: download the app
 
-1. Download `MLXRunner.zip` from the [latest release](https://github.com/ramirobuisan/mlxrunner/releases/latest).
+1. Download `MLXRunner.zip` from the [latest release](https://github.com/ramirobuisan/MLXRunner/releases/latest).
 2. Double-click the zip, then drag `MLXRunner.app` into your **Applications** folder.
 3. The app is not notarized by Apple, so macOS blocks the first launch. Open **Terminal** and run:
 
@@ -48,7 +48,7 @@ You need an Apple Silicon Mac (M1 or newer) with macOS 15 or newer.
 You also need Xcode 16 or newer and [Homebrew](https://brew.sh). Open **Terminal** and run:
 
 ```sh
-git clone https://github.com/ramirobuisan/mlxrunner.git ~/Developer/MLXRunner
+git clone https://github.com/ramirobuisan/MLXRunner.git ~/Developer/MLXRunner
 cd ~/Developer/MLXRunner
 ./scripts/build.sh --install
 open /Applications/MLXRunner.app
