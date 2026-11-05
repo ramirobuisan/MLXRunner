@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check engines.json
+        run: |
+          python3 - <<'PY'
+          import json
+          specs = json.load(open("MLXRunner/Resources/engines.json"))
+          ids = [s["id"] for s in specs]
+          assert len(ids) == len(set(ids)), "duplicate engine ids"
+          for s in specs:
+              for key in ("id", "name", "repo", "summary", "install", "command"):
+                  assert key in s, f"{s.get('id', '?')}: missing {key}"
+              assert s["install"]["kind"] in ("uv", "brew", "external"), f"{s['id']}: unknown install kind"
+          print(f"{len(ids)} engines OK")
+          PY
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build
+        run: |
+          xcodegen generate
+          xcodebuild -project MLXRunner.xcodeproj -scheme MLXRunner -configuration Release \
+            -derivedDataPath build/DerivedData CODE_SIGN_IDENTITY=- build

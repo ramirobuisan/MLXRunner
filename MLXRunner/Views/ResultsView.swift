@@ -1,5 +1,4 @@
 import SwiftUI
-import Charts
 import AppKit
 import UniformTypeIdentifiers
 
@@ -59,7 +58,7 @@ struct ModelResultCard: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(summary.modelName).font(.title3.bold())
-                    Text(summary.modelPath).font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    Text(summary.modelPath.tildePath).font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                 }
                 Spacer()
                 if let best = summary.best {
@@ -76,15 +75,7 @@ struct ModelResultCard: View {
             }
 
             if !summary.scores.isEmpty {
-                Chart(summary.scores) { s in
-                    BarMark(x: .value("Generation tok/s", s.genTps), y: .value("Engine", s.engineName))
-                        .foregroundStyle(s.engineId == summary.best?.engineId ? Color.orange : Color.accentColor.opacity(0.7))
-                        .annotation(position: .trailing) {
-                            Text(s.genTps.fmt(1)).font(.caption2).foregroundStyle(.secondary)
-                        }
-                }
-                .chartXAxisLabel("Generation speed (tokens/s, average over prompt lengths)")
-                .frame(height: CGFloat(36 * summary.scores.count + 40))
+                SpeedBars(scores: summary.scores, bestId: summary.best?.engineId)
 
                 Grid(alignment: .trailing, horizontalSpacing: 18, verticalSpacing: 6) {
                     GridRow {
@@ -153,5 +144,36 @@ struct ModelResultCard: View {
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .controlBackgroundColor)))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary.opacity(0.15)))
+    }
+}
+
+/// Horizontal bars of generation speed per engine.
+struct SpeedBars: View {
+    let scores: [EngineScore]
+    let bestId: String?
+
+    var body: some View {
+        let maxV = max(1, scores.map { $0.genTps }.max() ?? 1)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Generation speed (tokens/s, average over prompt lengths)")
+                .font(.caption).foregroundStyle(.secondary)
+            ForEach(scores) { s in
+                HStack(spacing: 10) {
+                    Text(s.engineName)
+                        .font(.callout)
+                        .lineLimit(1)
+                        .frame(width: 160, alignment: .trailing)
+                    GeometryReader { g in
+                        HStack(spacing: 6) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(s.engineId == bestId ? Color.orange : Color.accentColor.opacity(0.75))
+                                .frame(width: max(2, (g.size.width - 60) * s.genTps / maxV))
+                            Text(s.genTps.fmt(1)).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(height: 18)
+                }
+            }
+        }
     }
 }

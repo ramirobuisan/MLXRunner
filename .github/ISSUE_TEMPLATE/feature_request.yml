@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest an improvement to MLXRunner.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe what you are trying to do and what gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How could MLXRunner help? Screenshots or sketches are welcome.

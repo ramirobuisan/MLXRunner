@@ -57,3 +57,8 @@ extension Double {
 extension Int64 {
     var gb: Double { Double(self) / 1_000_000_000 }
 }
+
+extension String {
+    /// The path with the home folder shown as `~`, for display.
+    var tildePath: String { (self as NSString).abbreviatingWithTildeInPath }
+}

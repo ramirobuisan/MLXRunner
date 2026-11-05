@@ -10,12 +10,15 @@ final class LaunchedServer: Identifiable, @unchecked Sendable {
     let requestModel: String
     let process: Process?
     let lmsIdentifier: String?
+    /// True when MLXRunner started LM Studio's server (so it stops it again afterwards).
+    let lmsStartedServer: Bool
     let startedAt = Date()
 
     init(spec: EngineSpec, model: LocalModel, host: String, port: Int, requestModel: String,
-         process: Process?, lmsIdentifier: String?) {
+         process: Process?, lmsIdentifier: String?, lmsStartedServer: Bool = false) {
         self.spec = spec; self.model = model; self.host = host; self.port = port
         self.requestModel = requestModel; self.process = process; self.lmsIdentifier = lmsIdentifier
+        self.lmsStartedServer = lmsStartedServer
     }
 
     /// Base URL to reach the server from this Mac.
@@ -123,19 +126,49 @@ enum EngineLauncher {
         if let start = ls.output.firstIndex(of: "["),
            let data = String(ls.output[start...]).data(using: .utf8),
            let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
-            if let hit = arr.first(where: { ($0["path"] as? String) == rel || ($0["indexedModelIdentifier"] as? String) == rel }),
-               let k = hit["modelKey"] as? String {
-                key = k
+            func norm(_ s: String) -> String {
+                (s.split(separator: "/").last.map(String.init) ?? s).lowercased()
             }
+            let relName = norm(rel)
+            let exact = arr.first { ($0["path"] as? String) == rel || ($0["indexedModelIdentifier"] as? String) == rel }
+            // LM Studio sometimes indexes a folder under a shorter catalog name (e.g. qwen/qwen3-vl-30b).
+            let fuzzy = arr.first { e in
+                guard e["format"] as? String != "gguf", let p = e["path"] as? String else { return false }
+                let n = norm(p)
+                return !n.isEmpty && (relName.hasPrefix(n) || n.hasPrefix(relName))
+            }
+            if let k = (exact ?? fuzzy)?["modelKey"] as? String { key = k }
         }
-        let ident = "mlxrunner-\(port)"
-        onLine("$ lms server start --port \(port) --bind \(host)")
-        await Shell.run(lms, ["server", "start", "--port", String(port), "--bind", host], onLine: onLine)
+        // LM Studio has a single server. Reuse it if it is running; otherwise start it on its usual port
+        // (no --port flag, so the user's LM Studio settings are left untouched) and stop it afterwards.
+        func serverPort() async -> Int? {
+            let st = await Shell.run(lms, ["server", "status", "--json"])
+            guard let start = st.output.firstIndex(of: "{"),
+                  let data = String(st.output[start...]).data(using: .utf8),
+                  let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  obj["running"] as? Bool == true else { return nil }
+            return (obj["port"] as? NSNumber)?.intValue
+        }
+        var lmsPort = await serverPort()
+        let startedServer = lmsPort == nil
+        if startedServer {
+            onLine("$ lms server start")
+            await Shell.run(lms, ["server", "start"], onLine: onLine)
+            lmsPort = await serverPort()
+        }
+        guard let activePort = lmsPort else { throw LaunchError.exited("LM Studio server did not start") }
+        let ident = "mlxrunner-\(UUID().uuidString.prefix(6).lowercased())"
         onLine("$ lms load \(key) --identifier \(ident) -y")
-        let r = await Shell.run(lms, ["load", key, "--identifier", ident, "-y"], onLine: onLine)
-        if r.status != 0 { throw LaunchError.exited("lms load failed (exit \(r.status))") }
-        let server = LaunchedServer(spec: spec, model: model, host: host, port: port, requestModel: ident,
-                                    process: nil, lmsIdentifier: ident)
+        // `lms load` redraws a progress spinner many times per second; only forward real messages.
+        let r = await Shell.run(lms, ["load", key, "--identifier", ident, "-y"], onLine: { line in
+            if !line.hasPrefix("Loading ") { onLine(line) }
+        })
+        if r.status != 0 {
+            if startedServer { await Shell.run(lms, ["server", "stop"]) }
+            throw LaunchError.exited("lms load failed (exit \(r.status))")
+        }
+        let server = LaunchedServer(spec: spec, model: model, host: "127.0.0.1", port: activePort, requestModel: ident,
+                                    process: nil, lmsIdentifier: ident, lmsStartedServer: startedServer)
         try await waitReady(server, timeout: 120, exitBox: ExitBox())
         return server
     }
@@ -163,6 +196,7 @@ enum EngineLauncher {
     static func stop(_ server: LaunchedServer, onLine: ((String) -> Void)? = nil) async {
         if let ident = server.lmsIdentifier, let lms = Shell.which("lms") {
             await Shell.run(lms, ["unload", ident], onLine: onLine)
+            if server.lmsStartedServer { await Shell.run(lms, ["server", "stop"], onLine: onLine) }
         }
         if let p = server.process {
             await Shell.terminateTree(p)

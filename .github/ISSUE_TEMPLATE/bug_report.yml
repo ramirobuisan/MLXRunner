@@ -1,0 +1,39 @@
+name: Bug report
+description: Something in MLXRunner doesn't work.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Engine and version
+      description: For example "vllm-mlx 0.6.0". Leave empty if no engine is involved.
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: For example "mlx-community/Qwen3-0.6B-4bit".
+  - type: input
+    id: mac
+    attributes:
+      label: Mac and macOS version
+      description: Shown at the bottom of the sidebar, for example "Apple M4 Pro, 48 GB, macOS 15.6".
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: MLXRunner version or commit
+      description: From MLXRunner > About MLXRunner, or `git rev-parse --short HEAD`.
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Select the engine in the Engines tab (or open the Benchmark or Serve tab), press the copy button on the log and paste it here.
+      render: text

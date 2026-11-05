@@ -265,7 +265,7 @@ final class BenchmarkRunner: ObservableObject {
                                                       readyTimeout: settings.readyTimeout, onLine: lineHandler())
             server = srv
             monitor.start(pid: srv.pid)
-            append("  server up on :\(port) after \(Date().timeIntervalSince(t0).fmt(1)) s, warming up…")
+            append("  server up on :\(srv.port) after \(Date().timeIntervalSince(t0).fmt(1)) s, warming up…")
             var extras = true
             // Warm-up with a ~1k token prompt; also calibrates characters per token for this tokenizer.
             let warmPrompt = BenchClient.prompt(tokens: 1024, nonce: UUID().uuidString)
@@ -298,6 +298,7 @@ final class BenchmarkRunner: ObservableObject {
                         break
                     }
                 }
+                if Task.isCancelled && samples.count < settings.runs { break }   // don't record partial runs
                 let mem = monitor.snapshot()
                 var res = base(target)
                 if samples.isEmpty {
@@ -316,6 +317,8 @@ final class BenchmarkRunner: ObservableObject {
                 live.append(res)
                 store.add(res)
             }
+        } catch where Task.isCancelled {
+            append("  cancelled")
         } catch {
             append("  ✗ \(error.localizedDescription)")
             var res = base(0)

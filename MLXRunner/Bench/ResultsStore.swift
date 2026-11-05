@@ -96,7 +96,10 @@ final class ResultsStore: ObservableObject {
         let byModel = Dictionary(grouping: rows, by: { $0.modelPath })
         return byModel.map { path, rs in
             let ok = rs.filter { $0.ok }
-            let errors = rs.filter { !$0.ok }
+            // Hide failures that a later successful run of the same engine superseded.
+            let errors = rs.filter { e in
+                !e.ok && !rs.contains { $0.ok && $0.engineId == e.engineId && $0.date > e.date }
+            }
             let byEngine = Dictionary(grouping: ok, by: { $0.engineId })
             var scores: [EngineScore] = byEngine.map { id, er in
                 func avg(_ f: (BenchResult) -> Double) -> Double { er.map(f).reduce(0, +) / Double(er.count) }

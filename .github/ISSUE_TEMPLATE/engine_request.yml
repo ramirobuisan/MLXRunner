@@ -1,0 +1,35 @@
+name: Engine request
+description: Ask for an MLX engine to be added.
+labels: [engine]
+body:
+  - type: input
+    id: repo
+    attributes:
+      label: GitHub repository
+      placeholder: https://github.com/owner/engine
+    validations:
+      required: true
+  - type: textarea
+    id: install
+    attributes:
+      label: How is it installed?
+      description: For example "pip install my-engine", a Homebrew formula, or an app.
+    validations:
+      required: true
+  - type: textarea
+    id: serve
+    attributes:
+      label: How does it start an OpenAI-compatible server?
+      description: The command, and how to set the model, host and port.
+      render: sh
+  - type: textarea
+    id: why
+    attributes:
+      label: What makes it interesting?
+      description: For example speculative decoding, a faster kernel, lower memory use.
+  - type: checkboxes
+    id: tried
+    attributes:
+      label: Custom engine
+      options:
+        - label: I tried it as a custom engine from the Discover tab, and it works.
