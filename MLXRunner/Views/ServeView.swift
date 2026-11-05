@@ -72,6 +72,13 @@ struct ServeView: View {
                 }
                 .formStyle(.grouped)
                 .frame(minWidth: 360, idealWidth: 420, maxWidth: 520)
+                .onAppear {
+                    // Preselect a benchmarked model (or the first one) so serving is one click.
+                    if modelId == nil {
+                        let benchmarked = Set(results.results.filter { $0.ok }.map(\.modelPath))
+                        modelId = (models.local.first { benchmarked.contains($0.path) } ?? models.local.first)?.id
+                    }
+                }
                 .onChange(of: modelId) { _, _ in
                     if let m = model, let best = results.bestEngine(for: m.path), engines.isInstalled(best) {
                         engineId = best

@@ -56,6 +56,14 @@ struct LogView: View {
                 .padding(10)
             }
             .background(Color(nsColor: .textBackgroundColor).opacity(0.6))
+            .overlay(alignment: .topTrailing) {
+                if !lines.isEmpty {
+                    Button { Clipboard.copy(lines.joined(separator: "\n")) } label: { Image(systemName: "doc.on.doc") }
+                        .buttonStyle(.borderless)
+                        .help("Copy log")
+                        .padding(8)
+                }
+            }
             .onChange(of: lines.count) { _, n in
                 if n > 0 { proxy.scrollTo(n - 1, anchor: .bottom) }
             }

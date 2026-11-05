@@ -44,11 +44,8 @@ struct BenchmarkView: View {
                 }
             }
         }
-        .onAppear {
-            if runner.selectedEngines.isEmpty {
-                runner.selectedEngines = Set(engines.specs.filter { engines.isInstalled($0.id) }.map(\.id))
-            }
-        }
+        .onAppear { selectInstalledIfEmpty() }
+        .onChange(of: engines.status) { _, _ in selectInstalledIfEmpty() }
     }
 
     private var config: some View {
@@ -110,6 +107,12 @@ struct BenchmarkView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// Until the user picks engines, preselect every installed one (statuses load asynchronously).
+    private func selectInstalledIfEmpty() {
+        guard runner.selectedEngines.isEmpty, !runner.isRunning else { return }
+        runner.selectedEngines = Set(engines.specs.filter { engines.isInstalled($0.id) }.map(\.id))
     }
 
     private func binding(for id: String, in set: Binding<Set<String>>) -> Binding<Bool> {

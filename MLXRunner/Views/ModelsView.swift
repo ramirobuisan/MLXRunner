@@ -30,7 +30,7 @@ struct LocalModelsView: View {
                 TableColumn("Model") { m in
                     VStack(alignment: .leading, spacing: 1) {
                         Text(m.displayName).fontWeight(.medium)
-                        Text(m.path).font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                        Text(m.path.tildePath).font(.caption2).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                     }
                 }
                 .width(min: 280, ideal: 420)
@@ -58,7 +58,7 @@ struct LocalModelsView: View {
             }
             Divider()
             HStack {
-                Text("\(models.local.count) models · \(models.local.reduce(0) { $0 + $1.sizeGB }.fmt(0)) GB · Downloads go to \(Paths.modelsDir.path)")
+                Text("\(models.local.count) models · \(models.local.reduce(0) { $0 + $1.sizeGB }.fmt(0)) GB · Downloads go to \(Paths.modelsDir.path.tildePath)")
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
                 if models.isScanning { ProgressView().controlSize(.small) }

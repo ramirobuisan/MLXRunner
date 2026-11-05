@@ -1,0 +1,44 @@
+name: Release
+
+# Push a tag such as v0.1.0 to build the app and publish it as a GitHub release.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Set version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i '' \
+            -e "s/CFBundleShortVersionString: \".*\"/CFBundleShortVersionString: \"$VERSION\"/" \
+            -e "s/MARKETING_VERSION: \".*\"/MARKETING_VERSION: \"$VERSION\"/" \
+            -e "s/CFBundleVersion: \".*\"/CFBundleVersion: \"$GITHUB_RUN_NUMBER\"/" \
+            -e "s/CURRENT_PROJECT_VERSION: \".*\"/CURRENT_PROJECT_VERSION: \"$GITHUB_RUN_NUMBER\"/" \
+            project.yml
+
+      - name: Build
+        run: ./scripts/build.sh
+
+      - name: Package
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent build/MLXRunner.app MLXRunner.zip
+          shasum -a 256 MLXRunner.zip > MLXRunner.zip.sha256
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" MLXRunner.zip MLXRunner.zip.sha256 \
+            --title "MLXRunner $GITHUB_REF_NAME" --generate-notes
