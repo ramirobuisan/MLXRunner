@@ -144,7 +144,8 @@ struct ModelRecipe {
     /// Why this model can't run on an engine, or nil.
     func incompatibility(engineId: String, engineName: String, version: String?) -> String? {
         if let only = onlyEngines, !only.contains(engineId) {
-            return "this model only runs on \(only.joined(separator: ", "))"
+            return only.isEmpty ? "none of the engines MLXRunner installs can run this model"
+                                : "this model only runs on \(only.joined(separator: ", "))"
         }
         guard let hint = engines[engineId] else { return nil }
         if let why = hint.unsupported { return why }
@@ -227,9 +228,18 @@ final class ModelProfiles {
         if let mode = quant?["mode"] as? String, ["mxfp8", "mxfp4", "nvfp4"].contains(mode) {
             r.notes.append("Quantized with \(mode), which needs a recent MLX. Engines with an older MLX fail to load it; update them in Engines.")
         }
+        // What the files themselves rule out; profiles can't widen it.
+        var fileOnly: [String]?
         if FileManager.default.fileExists(atPath: dir.appendingPathComponent("ngram_table.bin").path) {
-            r.onlyEngines = ["mlx-serve"]
+            fileOnly = ["mlx-serve"]
             r.notes.append("This is an mlx-serve pack (its n-gram table is in ngram_table.bin), so only mlx-serve can run it.")
+        }
+        if (quant?["bits"] as? NSNumber)?.intValue == 1 {
+            fileOnly = []
+            r.notes.append("Its weights are 1-bit, which needs PrismML's MLX fork with 1-bit kernels. The engines MLXRunner installs use standard MLX and can't run it.")
+        }
+        if FileManager.default.fileExists(atPath: dir.appendingPathComponent("mtplx_runtime.json").path) {
+            r.notes.append("Tuned for MTPLX: MTPLX reads its MTP depth and sampler from mtplx_runtime.json, so it needs no extra flags. Other engines run it without that speed-up.")
         }
         if m.hasMTP {
             r.notes.append("Has a multi-token prediction (MTP) head: MTPLX and mlx-serve use it to generate faster.")
@@ -263,6 +273,7 @@ final class ModelProfiles {
             }
             profileNotes += p.notes ?? []
         }
+        if let f = fileOnly { r.onlyEngines = r.onlyEngines.map { only in only.filter { f.contains($0) } } ?? f }
         r.notes = profileNotes + r.notes
         if let need = r.minMemoryGB, SystemInfo.machine.ramGB < need {
             r.notes.insert("This Mac has \(SystemInfo.machine.ramGB.fmt(0)) GB of memory; this model needs at least \(need.fmt(0)) GB.", at: 0)

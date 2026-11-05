@@ -129,6 +129,8 @@ A profile matches a model by `repos` (exact Hugging Face ids), `nameContains` (p
 }
 ```
 
+`onlyEngines` lists the only engines that can run the model; an empty list means none of MLXRunner's engines can (say which runtime it needs in `notes`). Some limits come from the model's files and can't be widened by a profile: `ngram_table.bin` means mlx-serve only, and 1-bit weights mean no engine.
+
 `thinking` and `instruct` are the sampling settings for thinking and non-thinking mode. Engine `args` are added every time that engine runs the model, so only use flags the engine accepts. Always link the model card in `source`, and only copy settings the card actually states.
 
 To try a profile without rebuilding, put a list of profiles in `~/Library/Application Support/MLXRunner/model-profiles.json` and press **Rescan** in the Models tab.

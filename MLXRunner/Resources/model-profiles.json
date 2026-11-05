@@ -163,7 +163,8 @@
     "notes": [
       "reasoning_effort sets how long it thinks: low, medium or xhigh (the default). Lower effort is faster per answer but can need more retries in agent work.",
       "preserve_thinking is on by default: earlier turns keep their reasoning, which costs tokens but helps multi-turn accuracy.",
-      "For agent work Qwen suggests long outputs: up to 262,144 tokens of reasoning and 131,072 tokens of answer."
+      "For agent work Qwen suggests long outputs: up to 262,144 tokens of reasoning and 131,072 tokens of answer.",
+      "If tool calls fail when a client sends arguments as JSON strings, or thinking runs out of tokens at xhigh, the community template froggeric/Qwen-Fixed-Chat-Templates fixes both (it defaults to medium effort). Replace chat_template.jinja in the model folder with it."
     ]
   },
   {
@@ -175,15 +176,26 @@
     ],
     "source": "https://huggingface.co/Qwen/Qwen3.8-Flash-Next",
     "onlyEngines": [
-      "mlx-serve"
+      "mlx-serve",
+      "mlx-vlm",
+      "omlx"
     ],
     "engines": {
       "mlx-serve": {
         "minVersion": "26.8.11"
+      },
+      "omlx": {
+        "minVersion": "0.6.4",
+        "note": "Turn on native MTP in oMLX's model settings for MTP builds."
+      },
+      "mlx-vlm": {
+        "note": "Needs an mlx-vlm with qwen4_exp support; older releases can't load it."
       }
     },
     "notes": [
-      "The qwen4_exp architecture (n-gram embedding, hyper-connections) only runs in mlx-serve 26.8.11 or newer on a Mac."
+      "The qwen4_exp architecture (n-gram embedding, hyper-connections, Qwen Sparse Attention) runs on mlx-serve 26.8.11 or newer, oMLX 0.6.4 or newer and recent mlx-vlm. mlx-lm and the engines built on it can't load it.",
+      "mlx-serve packs (with ngram_table.bin) run only on mlx-serve. Standard MLX builds run on mlx-vlm and oMLX.",
+      "Don't attach a Qwen3.8-27B MTP drafter: Flash-Next has different hidden sizes. MTP builds ship their own MTP block."
     ]
   },
   {
@@ -218,6 +230,337 @@
     "notes": [
       "Gated on Hugging Face: accept the terms on the model page, then add a read token in MLXRunner Settings to download it.",
       "The repo root is the 4-bit build. Avoid the 2-bit build: it breaks down into repetition loops and garbled text."
+    ]
+  },
+  {
+    "id": "qwen3.6",
+    "name": "Qwen3.6",
+    "priority": 20,
+    "nameContains": [
+      "qwen3.6"
+    ],
+    "source": "https://huggingface.co/Qwen/Qwen3.6-27B",
+    "thinking": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0,
+      "presence_penalty": 0,
+      "repetition_penalty": 1.0
+    },
+    "instruct": {
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "min_p": 0,
+      "presence_penalty": 1.5,
+      "repetition_penalty": 1.0
+    },
+    "maxTokens": 32768,
+    "notes": [
+      "For precise coding in thinking mode, Qwen suggests temperature 0.6. For hard math and programming, allow up to 81,920 output tokens.",
+      "Qwen3.6 doesn't support the /think and /no_think soft switch; turn thinking off with enable_thinking false.",
+      "Earlier turns drop their reasoning unless you send preserve_thinking true, which helps agents reuse the KV cache.",
+      "Keep at least 128K tokens of context so thinking works well."
+    ]
+  },
+  {
+    "id": "gemma4",
+    "name": "Gemma 4",
+    "priority": 10,
+    "modelTypes": [
+      "gemma4",
+      "gemma4_text"
+    ],
+    "nameContains": [
+      "gemma-4"
+    ],
+    "source": "https://huggingface.co/google/gemma-4-26B-A4B-it",
+    "thinkingByDefault": false,
+    "thinking": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64
+    },
+    "instruct": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64
+    },
+    "notes": [
+      "Thinking is off by default. Turn it on with enable_thinking true (or <|think|> at the start of the system prompt).",
+      "In multi-turn chats, keep only the final answers of earlier turns, not their thoughts, except in tool-call turns.",
+      "Vision model: send images before the text. E2B, E4B and 12B also take audio. To send images, use mlx-vlm, mlx-openai-server or LM Studio.",
+      "Context: 256K tokens."
+    ]
+  },
+  {
+    "id": "ornith-1.5",
+    "name": "Ornith 1.5",
+    "priority": 20,
+    "nameContains": [
+      "ornith"
+    ],
+    "source": "https://huggingface.co/ornith-ai/Ornith-1.5-35B-A3B-MLX",
+    "thinkingByDefault": true,
+    "thinking": {
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "top_k": 20,
+      "presence_penalty": 0
+    },
+    "instruct": {
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "top_k": 20,
+      "presence_penalty": 0
+    },
+    "notes": [
+      "Always reasons first, in a <think> block; the card gives no way to turn it off.",
+      "The card's benchmarks use temperature 1.0.",
+      "For about 1M tokens of context, YaRN factor 4.0 over 262,144 native tokens; only switch it on when you need it."
+    ]
+  },
+  {
+    "id": "bonsai-2-ternary",
+    "name": "Bonsai 2 ternary",
+    "priority": 20,
+    "modelTypes": [
+      "prism_hadamard_qwen35"
+    ],
+    "source": "https://docs.prismml.com/download/formats.md",
+    "onlyEngines": [
+      "mlx-vlm"
+    ],
+    "engines": {
+      "mlx-vlm": {
+        "minVersion": "0.7.8"
+      }
+    },
+    "notes": [
+      "Ternary Bonsai 2 packs load natively in mlx-vlm 0.7.8 or newer. mlx-lm 0.32.0 can't load them yet; no MLX fork is needed."
+    ]
+  },
+  {
+    "id": "bonsai-1bit",
+    "name": "Bonsai 1-bit",
+    "priority": 30,
+    "repos": [
+      "prism-ml/Bonsai-27B-mlx-1bit",
+      "prism-ml/Bonsai-8B-mlx-1bit"
+    ],
+    "source": "https://huggingface.co/prism-ml/Bonsai-8B-mlx-1bit",
+    "onlyEngines": [],
+    "thinking": {
+      "temperature": 0.7,
+      "top_p": 0.95,
+      "top_k": 20
+    },
+    "notes": [
+      "Needs PrismML's MLX fork with 1-bit kernels (pip install \"mlx @ git+https://github.com/PrismML-Eng/mlx.git@prism\"); upstream support is still pending. MLXRunner's engines use standard MLX."
+    ]
+  },
+  {
+    "id": "jang",
+    "name": "JANG pack (vMLX)",
+    "priority": 30,
+    "nameContains": [
+      "-jang"
+    ],
+    "source": "https://huggingface.co/dealignai/Bonsai-2-27B-CRACK-Ternary-JANG",
+    "onlyEngines": [],
+    "notes": [
+      "JANG packs carry a Hadamard sidecar that only vMLX applies. Standard MLX engines load them but produce garbage, so run it in vMLX."
+    ]
+  },
+  {
+    "id": "edge0",
+    "name": "Edge0",
+    "priority": 30,
+    "nameContains": [
+      "edge0"
+    ],
+    "source": "https://huggingface.co/Edge0/Edge0-35B-A3B-preview",
+    "notes": [
+      "Edge0 needs its own runtime (edge0 serve) to apply its LoRA and pre-router. MLXRunner's engines only run the base Qwen3.6 weights, which is not Edge0.",
+      "It streams experts from the SSD, so keep it on the internal SSD."
+    ]
+  },
+  {
+    "id": "deepseek-v4.1",
+    "name": "DeepSeek V4.1 Flash",
+    "priority": 10,
+    "modelTypes": [
+      "deepseek_v41"
+    ],
+    "source": "https://huggingface.co/ddalcu/DeepSeek-V4.1-Flash-1017-MLX-Serve-iQ-MLX-3.0bpw",
+    "onlyEngines": [
+      "mlx-serve"
+    ],
+    "engines": {
+      "mlx-serve": {
+        "minVersion": "26.10.3"
+      }
+    },
+    "notes": [
+      "deepseek_v41 runs on mlx-serve 26.10.3 or newer (and oMLX's V4.1 port, not in its releases yet). Mainline mlx-vlm, mlx-lm and transformers can't load it.",
+      "Thinking is on by default; send enable_thinking false to turn it off. mlx-serve drafts with its DSpark MTP stages by default (--no-mtp or enable_mtp false turns them off).",
+      "Its Engram tables (about 200 GB) are read from the SSD for every token: keep it on the internal SSD.",
+      "Context: 1,048,576 tokens."
+    ]
+  },
+  {
+    "id": "ddalcu-deepseek-v4.1-pruned",
+    "name": "DeepSeek V4.1 Flash, mlx-serve pruned 2.25 bpw pack",
+    "priority": 30,
+    "repos": [
+      "ddalcu/DeepSeek-V4.1-Flash-1017-MLX-Serve-iQ-MLX-Pruned192-2.25bpw"
+    ],
+    "source": "https://huggingface.co/ddalcu/DeepSeek-V4.1-Flash-1017-MLX-Serve-iQ-MLX-Pruned192-2.25bpw",
+    "minMemoryGB": 128,
+    "engines": {
+      "mlx-serve": {
+        "minVersion": "26.11.2"
+      }
+    },
+    "notes": [
+      "About 92 GB stays resident; made for 128 GB Macs. Download: 296 GB.",
+      "Half of the experts are pruned: chat quality drops and non-English text degrades badly. On a 256 GB Mac use the 3.0 bpw pack."
+    ]
+  },
+  {
+    "id": "ddalcu-deepseek-v4.1-3bpw",
+    "name": "DeepSeek V4.1 Flash, mlx-serve 3.0 bpw pack",
+    "priority": 30,
+    "repos": [
+      "ddalcu/DeepSeek-V4.1-Flash-1017-MLX-Serve-iQ-MLX-3.0bpw"
+    ],
+    "source": "https://huggingface.co/ddalcu/DeepSeek-V4.1-Flash-1017-MLX-Serve-iQ-MLX-3.0bpw",
+    "minMemoryGB": 256,
+    "notes": [
+      "About 209 GB stays resident and loading needs about 215 GB free: close large apps first. Download: 427 GB."
+    ]
+  },
+  {
+    "id": "ddalcu-flash-next-4.7bpw",
+    "name": "Qwen3.8-Flash-Next, mlx-serve iQ 4.7 bpw pack",
+    "priority": 30,
+    "repos": [
+      "ddalcu/Qwen3.8-Flash-Next-MLX-Serve-iQ-MLX-4.7bpw"
+    ],
+    "source": "https://huggingface.co/ddalcu/Qwen3.8-Flash-Next-MLX-Serve-iQ-MLX-4.7bpw",
+    "minMemoryGB": 96,
+    "notes": [
+      "About 75 GB stays resident; 128 GB Mac recommended. The 32 GB ngram_table.bin is memory-mapped from the SSD.",
+      "MTP drafts by default; --no-mtp or enable_mtp false turns it off. --kv-quant 8 halves the KV cache."
+    ]
+  },
+  {
+    "id": "ddalcu-flash-next-3.3bpw",
+    "name": "Qwen3.8-Flash-Next, mlx-serve iQ 3.3 bpw pack",
+    "priority": 30,
+    "repos": [
+      "ddalcu/Qwen3.8-Flash-Next-MLX-Serve-iQ-MLX-3.3bpw"
+    ],
+    "source": "https://huggingface.co/ddalcu/Qwen3.8-Flash-Next-MLX-Serve-iQ-MLX-3.3bpw",
+    "minMemoryGB": 64,
+    "notes": [
+      "Made for 64 GB Macs (about 52 GB resident). On a 64 GB Mac, run sudo sysctl iogpu.wired_limit_mb=58000 once after every restart, and add --skip-mem-preflight and --ctx-size 65536 in Extra engine arguments.",
+      "The first long prompt after a restart is slower while ngram_table.bin is read from the SSD."
+    ]
+  },
+  {
+    "id": "ddalcu-flash-next-mixed-4-8bit",
+    "name": "Qwen3.8-Flash-Next, mlx-serve mixed 4/8-bit pack",
+    "priority": 30,
+    "repos": [
+      "ddalcu/Qwen3.8-Flash-Next-MLX-Serve-mixed-4-8bit"
+    ],
+    "source": "https://huggingface.co/ddalcu/Qwen3.8-Flash-Next-MLX-Serve-mixed-4-8bit",
+    "minMemoryGB": 96,
+    "notes": [
+      "No longer updated: the author recommends the iQ-MLX-4.7bpw pack, same size and closer to the original."
+    ]
+  },
+  {
+    "id": "orcarouter-flash-next",
+    "name": "Qwen3.8-Flash-Next Uncensored (orcarouter)",
+    "priority": 30,
+    "repos": [
+      "orcarouter/Qwen3.8-Flash-Next-Uncensored-MLX"
+    ],
+    "source": "https://huggingface.co/orcarouter/Qwen3.8-Flash-Next-Uncensored-MLX",
+    "minMemoryGB": 192,
+    "notes": [
+      "The 4-bit build at the repo root needs 163 GB of memory (6-bit 192 GB, 8-bit 221 GB): Mac Studio Ultra class.",
+      "Gated on Hugging Face: accept the terms on the model page, then add a read token in MLXRunner Settings to download it."
+    ]
+  },
+  {
+    "id": "sh0wie-flash-next-reap",
+    "name": "Qwen3.8-Flash-Next REAP-288",
+    "priority": 30,
+    "repos": [
+      "sh0wie/Qwen3.8-Flash-Next-REAP-288-MLX-4bit"
+    ],
+    "source": "https://huggingface.co/sh0wie/Qwen3.8-Flash-Next-REAP-288-MLX-4bit",
+    "minMemoryGB": 96,
+    "engines": {
+      "omlx": {
+        "note": "With a memory guard below 68 GB (omlx serve --memory-guard-gb 48), oMLX streams the n-gram table from the SSD and needs about 39 GB."
+      }
+    },
+    "notes": [
+      "Experts pruned from 512 to 288 for agentic coding: about 68 GB resident on mlx-vlm. Other domains and vision may lose more quality."
+    ]
+  },
+  {
+    "id": "mtplx-qwen3.8-27b-speed",
+    "name": "Qwen3.8-27B MTPLX Optimized Speed",
+    "priority": 30,
+    "repos": [
+      "Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed"
+    ],
+    "source": "https://huggingface.co/Youssofal/Qwen3.8-27B-MTPLX-Optimized-Speed",
+    "minMemoryGB": 32,
+    "engines": {
+      "mtplx": {
+        "note": "Built for MTPLX: no flags needed, it reads its tuned settings from mtplx_runtime.json."
+      }
+    },
+    "notes": [
+      "Peak memory about 23.6 GB. On M1 and M2 Macs the author recommends the FP16 build."
+    ]
+  },
+  {
+    "id": "mtplx-qwen3.8-9b-heretic",
+    "name": "Qwen3.8-9B heretic MTPLX",
+    "priority": 30,
+    "repos": [
+      "Foresee/Qwen3.8-9B-heretic-uncensored-4bit-MTPLX"
+    ],
+    "source": "https://huggingface.co/Foresee/Qwen3.8-9B-heretic-uncensored-4bit-MTPLX",
+    "engines": {
+      "mtplx": {
+        "note": "The author starts it with --mtp --depth 2 --profile sustained --verify-strategy capture_commit --verify-core linear-gdn-from-conv-tape --mtp-adapter <model folder>/mtp-adapter-r64.npz --merge-mtp-adapter. Add these in Extra engine arguments; depth 3 or more doesn't pay."
+      }
+    },
+    "notes": [
+      "Always opens with a <think> block, so leave room in the output length."
+    ]
+  },
+  {
+    "id": "solstice-qwen3.8-27b-1m",
+    "name": "Solstice Qwen3.8-27B TURBO 1M",
+    "priority": 30,
+    "repos": [
+      "Solstice-AI/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NM-DAU-mlx-oQ8e-1M"
+    ],
+    "source": "https://huggingface.co/Solstice-AI/Qwen3.8-27B-TURBO-Fable-Cold-Fusion-735-882-Heretic-Uncensored-NM-DAU-mlx-oQ8e-1M",
+    "minMemoryGB": 36,
+    "notes": [
+      "The full 1M context needs 64 GB or more; 36 GB Macs manage up to 262K. The card's 3-bit TurboQuant KV cache and its Anvil runtime aren't available in MLXRunner's engines.",
+      "The card's benchmarks use temperature 1.0 and top_p 0.95."
     ]
   }
 ]

@@ -21,7 +21,8 @@ struct ModelRecipeView: View {
                 }
             }
             if let only = recipe.onlyEngines {
-                Label("Runs only on \(only.compactMap { engines.spec($0)?.name ?? $0 }.joined(separator: ", "))",
+                Label(only.isEmpty ? "None of the engines in MLXRunner can run it"
+                                   : "Runs only on \(only.compactMap { engines.spec($0)?.name ?? $0 }.joined(separator: ", "))",
                       systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
             }
